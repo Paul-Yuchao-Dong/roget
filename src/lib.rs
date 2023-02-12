@@ -1,3 +1,5 @@
+pub mod algorithms;
+
 pub fn play<G: Guesser>(answer: &'static str, guesser: G) {
     // play rounds where it invoke guesser each time
 }
