@@ -1,8 +1,9 @@
-use roget::play;
+use roget::Wordle;
 const GAMES: &str = include_str!("../answers.txt");
 fn main() {
-    let mut guesser = roget::algorithms::Naive::new();
+    let w = Wordle::new();
     for answer in GAMES.split_whitespace() {
-        play(answer, guesser);
+        let mut guesser = roget::algorithms::Naive::new();
+        w.play(answer, guesser);
     }
 }
