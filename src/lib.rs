@@ -22,7 +22,7 @@ impl Wordle {
     pub fn play<G: Guesser>(&self, answer: &'static str, mut guesser: G) -> Option<usize> {
         // play rounds where it invoke guesser each time
         let mut history = Vec::new();
-        for i in 1..=32 {
+        for i in 1..=7 {
             let guess = guesser.guess(&history); // why the [..]?
             if guess == answer {return Some(i)}
             assert!(self.dictionary.contains(&*guess), "guess '{}' is not in dictionary", guess);
@@ -76,7 +76,7 @@ impl Correctness {
         c
     }    
     
-    pub fn permutations()-> impl Iterator<Item = [Self; 5]>{
+    pub fn patterns()-> impl Iterator<Item = [Self; 5]>{
         itertools::iproduct!(
             [Self::Correct, Self::Misplaced, Self::Wrong],
             [Self::Correct, Self::Misplaced, Self::Wrong],

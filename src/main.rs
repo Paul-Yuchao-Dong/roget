@@ -4,6 +4,10 @@ fn main() {
     let w = Wordle::new();
     for answer in GAMES.split_whitespace() {
         let mut guesser = roget::algorithms::Naive::new();
-        w.play(answer, guesser);
+        if let Some(score) = w.play(answer, guesser){
+            println!("Guessed {} in {}", answer, score);
+        }else{
+            eprintln!("failed to guess ");
+        };
     }
 }
