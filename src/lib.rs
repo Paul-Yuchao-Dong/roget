@@ -76,12 +76,81 @@ impl Correctness {
         c
     }    
     
+    pub fn permutations()-> impl Iterator<Item = [Self; 5]>{
+        itertools::iproduct!(
+            [Self::Correct, Self::Misplaced, Self::Wrong],
+            [Self::Correct, Self::Misplaced, Self::Wrong],
+            [Self::Correct, Self::Misplaced, Self::Wrong],
+            [Self::Correct, Self::Misplaced, Self::Wrong],
+            [Self::Correct, Self::Misplaced, Self::Wrong]
+        ).map(|(a,b,c,d,e)|[a,b,c,d,e])
+    }
 }
 
 
 pub struct Guess {
     pub word: String,
     pub mask: [Correctness; 5],
+}
+
+impl Guess {
+    pub fn matches(&self, word: &str) -> bool {
+        assert_eq!(self.word.len(), 5);
+        assert_eq!(word.len(), 5);
+        
+        // First check Greens
+        let mut used = [false; 5];
+        for (i,((g,&m),w)) in self.word.chars().zip(&self.mask).zip(word.chars()).enumerate(){
+            if m==Correctness::Correct{
+                if g!=w {return false;} else {
+                    used[i] =true;
+                    continue;
+                }
+            }
+        }
+
+        for (i,(w,m)) in word
+                                    .chars()
+                                    .zip(&self.mask)
+                                    .enumerate()
+        {    
+            if *m == Correctness::Correct {continue;} // must have been correct, or we'd returned
+            let mut plausible = true; 
+            if self.word.chars().zip(&self.mask).enumerate().any(|(j,(g,m))| {
+                if g!=w {return false;}
+                if used[j] {
+                    // Can't use this to support the character
+                    return false;
+                } 
+                // we are looking at an w in word, and have found an w in previous guess.
+                // the color of that previous w will tell us whether this w _might_ be okay.
+                match m {
+                    Correctness::Correct => unreachable!("all correct guesses should have resulted in return or be used"),
+                    Correctness::Misplaced if j==i => {
+                        // w was in the same position last time around, which means word cannot be the answer
+                        plausible = false;
+                        return false;
+                    },
+                    Correctness::Misplaced => {
+                        used[j] = true;
+                        return true
+                    },
+                    Correctness::Wrong => {
+                        // TODO early return
+                        // dbg!(i, j,g,m,w);
+                        plausible = false;
+                        return false;
+                    },
+                }
+            } ) && plausible {
+                // the charactor w was yellow in the previous match
+            } else if !plausible {
+                return false;
+            } else {
+            }
+        }
+        true
+    }
 }
 pub trait Guesser {
     fn guess(&mut self, history: &[Guess]) -> String;
@@ -98,8 +167,45 @@ macro_rules! guesser {
         G        
     }};
 }
+
+#[cfg(test)]
+macro_rules! mask {
+    (M) => {crate::Correctness::Misplaced};
+    (C) => {crate::Correctness::Correct};
+    (W) => {crate::Correctness::Wrong};
+    ($($c:tt)+) => {[$(mask!($c)),+]};
+}
 #[cfg(test)]
 mod tests {
+    mod guess_matcher{
+        use crate::Guess;
+        macro_rules! check {
+            ($prev:literal + [$($mask:tt)+] allows $next:literal) => {
+                assert!(Guess {word: $prev.to_string(), mask: mask!($($mask )+) }.matches($next));
+            };
+            ($prev:literal + [$($mask:tt)+] disallows $next:literal) => {
+                assert!(!Guess {word: $prev.to_string(), mask: mask!($($mask )+) }.matches($next));
+            };
+        }
+        #[test]
+        fn matches() {
+            check!("abcde" + [C C C C C] allows "abcde");
+            check!("abcdf" + [C C C C C] disallows "abcde");
+            check!("abcde" + [W W W W W] allows "fghij");
+            check!("abcde" + [M M M M M] allows "bcdea");
+
+        }
+        #[test]
+        fn chat(){
+            check!("aaabb" + [C M W W W] disallows "accaa");
+            check!("baaaa" + [W C M W W] allows "aaccc");
+            check!("baaaa" + [W C M W W] disallows "caacc");
+        }
+        #[test]
+        fn debug(){
+            check!("baaaa" + [W C M W W] allows "aaccc");
+        }
+    }
     mod game {
         use crate::{ Wordle, Guess};
 
