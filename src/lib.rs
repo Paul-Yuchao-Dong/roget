@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, borrow::Cow};
 
 pub mod algorithms;
 const DICT:&str = include_str!("../dictionary.txt");
@@ -28,7 +28,7 @@ impl Wordle {
             assert!(self.dictionary.contains(&*guess), "guess '{}' is not in dictionary", guess);
             let correctness = Correctness::compute(answer, &guess);
             history.push(Guess {
-                    word: guess,
+                    word: Cow::Owned(guess),
                     mask: correctness
                 });
         }
@@ -88,19 +88,19 @@ impl Correctness {
 }
 
 
-pub struct Guess {
-    pub word: String,
+pub struct Guess<'a> {
+    pub word: Cow<'a, str>,
     pub mask: [Correctness; 5],
 }
 
-impl Guess {
+impl Guess<'_> {
     pub fn matches(&self, word: &str) -> bool {
         assert_eq!(self.word.len(), 5);
         assert_eq!(word.len(), 5);
         
         // First check Greens
         let mut used = [false; 5];
-        for (i,((g,&m),w)) in self.word.chars().zip(&self.mask).zip(word.chars()).enumerate(){
+        for (i,((g,&m),w)) in self.word.bytes().zip(&self.mask).zip(word.bytes()).enumerate(){
             if m==Correctness::Correct{
                 if g!=w {return false;} else {
                     used[i] =true;
@@ -110,13 +110,13 @@ impl Guess {
         }
 
         for (i,(w,m)) in word
-                                    .chars()
-                                    .zip(&self.mask)
-                                    .enumerate()
+                        .bytes()
+                        .zip(&self.mask)
+                        .enumerate()
         {    
             if *m == Correctness::Correct {continue;} // must have been correct, or we'd returned
             let mut plausible = true; 
-            if self.word.chars().zip(&self.mask).enumerate().any(|(j,(g,m))| {
+            if self.word.bytes().zip(&self.mask).enumerate().any(|(j,(g,m))| {
                 if g!=w {return false;}
                 if used[j] {
                     // Can't use this to support the character
@@ -179,12 +179,13 @@ macro_rules! mask {
 mod tests {
     mod guess_matcher{
         use crate::Guess;
+        use std::borrow::Cow;
         macro_rules! check {
             ($prev:literal + [$($mask:tt)+] allows $next:literal) => {
-                assert!(Guess {word: $prev.to_string(), mask: mask!($($mask )+) }.matches($next));
+                assert!(Guess {word: Cow::Borrowed($prev), mask: mask!($($mask )+) }.matches($next));
             };
             ($prev:literal + [$($mask:tt)+] disallows $next:literal) => {
-                assert!(!Guess {word: $prev.to_string(), mask: mask!($($mask )+) }.matches($next));
+                assert!(!Guess {word: Cow::Borrowed($prev), mask: mask!($($mask )+) }.matches($next));
             };
         }
         #[test]
