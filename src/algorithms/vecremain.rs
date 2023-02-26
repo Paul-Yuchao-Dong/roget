@@ -35,7 +35,7 @@ impl Guesser for VecRem {
             // update self.remaining based on history
             self.remaining.retain(|(word, _)| last.matches(word));
         }
-        let remaining_count: usize = self.remaining.iter().map(|(word, count)|{count}).sum();
+        let remaining_count: usize = self.remaining.iter().map(|(_, count)|{count}).sum();
         let mut best:Option<Candidate>= None;
 
         for &(word, _) in &self.remaining {
@@ -61,11 +61,11 @@ impl Guesser for VecRem {
             if let Some(c) = best {
                 // is this one better?
                 if goodness > c.goodness {
-                    eprintln!("{} is better than {} ({} >{})", word, c.word, goodness, c.goodness);
+                    // eprintln!("{} is better than {} ({} >{})", word, c.word, goodness, c.goodness);
                     best = Some(Candidate { word, goodness });
                 }
             } else {
-                    eprintln!("starting with {} (goodness {})", word, goodness);
+                    // eprintln!("starting with {} (goodness {})", word, goodness);
                     best = Some(Candidate{ word, goodness});
                 }
             }

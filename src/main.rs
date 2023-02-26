@@ -4,6 +4,7 @@ use roget::{Wordle, Guesser};
 const GAMES: &str = include_str!("../answers.txt");
 
 #[derive(Parser, Debug)]
+#[allow(non_snake_case)]
 struct Args {
    /// Name of the person to greet
    #[clap(short, long, arg_enum)]
@@ -38,7 +39,7 @@ fn play<G>(mut mk: impl FnMut()->G, max:Option<usize>) where G: Guesser {
             .split_whitespace()
             .take(max.unwrap_or(usize::MAX))
     {
-        let mut guesser = (mk)();
+        let guesser = (mk)();
         if let Some(score) = w.play(answer, guesser){
             println!("Guessed {} in {}", answer, score);
         }else{

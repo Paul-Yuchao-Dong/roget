@@ -35,7 +35,7 @@ impl Guesser for Naive {
             // update self.remaining based on history
             self.remaining.retain(|word, _| last.matches(word));
         }
-        let remaining_count: usize = self.remaining.iter().map(|(word, &count)|{count}).sum();
+        let remaining_count: usize = self.remaining.iter().map(|(_, &count)|{count}).sum();
         let mut best:Option<Candidate>= None;
 
         for (&word, _) in &self.remaining {
