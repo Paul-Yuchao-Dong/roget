@@ -16,7 +16,8 @@ struct Args {
 #[derive(ArgEnum, Debug, Clone, Copy)]
 enum Implementation {
     Naive,
-    Allocs
+    Allocs,
+    VecRem
 }
 
 fn main() {
@@ -25,7 +26,8 @@ fn main() {
 
     match args.Implementation {
         Implementation::Naive => play(roget::algorithms::Naive::new, Some(args.max)),
-        Implementation::Allocs=> play(roget::algorithms::Allocs::new, Some(args.max))
+        Implementation::Allocs=> play(roget::algorithms::Allocs::new, Some(args.max)),
+        Implementation::VecRem => play(roget::algorithms::VecRem::new, Some(args.max)),
     }
 
 }
