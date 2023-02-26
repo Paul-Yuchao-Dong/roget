@@ -2,6 +2,9 @@ use std::{collections::HashSet, borrow::Cow};
 
 pub mod algorithms;
 const DICT:&str = include_str!("../dictionary.txt");
+pub trait Guesser {
+    fn guess(&mut self, history: &[Guess]) -> String;
+}
 pub struct Wordle{
     dictionary: HashSet<&'static str>
 }
@@ -95,65 +98,10 @@ pub struct Guess<'a> {
 
 impl Guess<'_> {
     pub fn matches(&self, word: &str) -> bool {
-        assert_eq!(self.word.len(), 5);
-        assert_eq!(word.len(), 5);
-        
-        // First check Greens
-        let mut used = [false; 5];
-        for (i,((g,&m),w)) in self.word.bytes().zip(&self.mask).zip(word.bytes()).enumerate(){
-            if m==Correctness::Correct{
-                if g!=w {return false;} else {
-                    used[i] =true;
-                    continue;
-                }
-            }
-        }
-
-        for (i,(w,m)) in word
-                        .bytes()
-                        .zip(&self.mask)
-                        .enumerate()
-        {    
-            if *m == Correctness::Correct {continue;} // must have been correct, or we'd returned
-            let mut plausible = true; 
-            if self.word.bytes().zip(&self.mask).enumerate().any(|(j,(g,m))| {
-                if g!=w {return false;}
-                if used[j] {
-                    // Can't use this to support the character
-                    return false;
-                } 
-                // we are looking at an w in word, and have found an w in previous guess.
-                // the color of that previous w will tell us whether this w _might_ be okay.
-                match m {
-                    Correctness::Correct => unreachable!("all correct guesses should have resulted in return or be used"),
-                    Correctness::Misplaced if j==i => {
-                        // w was in the same position last time around, which means word cannot be the answer
-                        plausible = false;
-                        return false;
-                    },
-                    Correctness::Misplaced => {
-                        used[j] = true;
-                        return true
-                    },
-                    Correctness::Wrong => {
-                        // TODO early return
-                        // dbg!(i, j,g,m,w);
-                        plausible = false;
-                        return false;
-                    },
-                }
-            } ) && plausible {
-                // the charactor w was yellow in the previous match
-            } else if !plausible {
-                return false;
-            } else {
-            }
-        }
-        true
+        // if guess G gives mask C against answer A, then
+        // guess A should also give mask C against answer G
+        return Correctness::compute(word, &self.word) == self.mask;
     }
-}
-pub trait Guesser {
-    fn guess(&mut self, history: &[Guess]) -> String;
 }
 #[cfg(test)]
 macro_rules! guesser {
