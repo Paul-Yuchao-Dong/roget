@@ -66,9 +66,9 @@ impl Correctness {
             // already marked Green
                 continue;
             } 
-            if answer.bytes().enumerate().any(|(i,a)| {
-               if a==g && !used[i] {
-                 used[i] = true;
+            if answer.bytes().zip(used.iter_mut()).any(|(a,used)| {
+               if a==g && !*used {
+                 *used = true;
                  return true
                } 
                false
