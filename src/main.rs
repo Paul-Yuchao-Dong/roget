@@ -18,7 +18,8 @@ struct Args {
 enum Implementation {
     Naive,
     Allocs,
-    VecRem
+    VecRem,
+    Once
 }
 
 fn main() {
@@ -29,6 +30,8 @@ fn main() {
         Implementation::Naive => play(roget::algorithms::Naive::new, Some(args.max)),
         Implementation::Allocs=> play(roget::algorithms::Allocs::new, Some(args.max)),
         Implementation::VecRem => play(roget::algorithms::VecRem::new, Some(args.max)),
+        Implementation::Once => play(roget::algorithms::Once::new, Some(args.max)),
+
     }
 
 }
