@@ -1,9 +1,9 @@
 use std::{collections::HashMap, borrow::Cow};
 
-use crate::{Guesser, Guess, DICT, Correctness};
+use crate::{Guesser, Guess, DICT, Word, Correctness};
 
 pub struct Naive{
-    remaining: HashMap<&'static str, usize>,
+    remaining: HashMap<&'static Word, usize>,
 }
 
 impl Naive {
@@ -14,7 +14,7 @@ impl Naive {
                     |line| {
                     let (word, count) = line.split_once(" ").expect("every line is word + space + occurance");
                     let count:usize = count.parse().expect("every count is a number");
-                    (word, count)
+                    (word.as_bytes().try_into().expect("5 letter words!"), count)
                     }
             ))       
         }
@@ -22,14 +22,14 @@ impl Naive {
 }
 #[derive(Debug, Clone, Copy)]
 struct Candidate {
-    word: &'static str,
+    word: &'static Word,
     goodness: f64,
 }
 
 impl Guesser for Naive {
-    fn guess(&mut self, history: &[Guess]) -> String{
+    fn guess(&mut self, history: &[Guess]) -> Word{
         if history.is_empty(){
-            return "tares".to_owned();
+            return *b"tares";
         }
         if let Some(last) = history.last(){
             // update self.remaining based on history
@@ -47,7 +47,7 @@ impl Guesser for Naive {
                 let mut in_pattern_total = 0;
                 for (candidate, count) in &self.remaining {
                     let g = Guess {
-                        word:Cow::Owned(word.to_string()),
+                        word:Cow::Owned(*word),
                         mask:pattern
                     };
                     if g.matches(candidate) {
@@ -61,15 +61,13 @@ impl Guesser for Naive {
             if let Some(c) = best {
                 // is this one better?
                 if goodness > c.goodness {
-                    eprintln!("{} is better than {} ({} >{})", word, c.word, goodness, c.goodness);
                     best = Some(Candidate { word, goodness });
                 }
             } else {
-                    eprintln!("starting with {} (goodness {})", word, goodness);
                     best = Some(Candidate{ word, goodness});
                 }
             }
-        best.unwrap().word.to_string()
+        *best.unwrap().word
     }
 }
 

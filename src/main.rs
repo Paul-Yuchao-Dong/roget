@@ -39,8 +39,9 @@ fn play<G>(mut mk: impl FnMut()->G, max:Option<usize>) where G: Guesser {
             .split_whitespace()
             .take(max.unwrap_or(usize::MAX))
     {
+        let answer_b: roget::Word = answer.as_bytes().try_into().unwrap();
         let guesser = (mk)();
-        if let Some(score) = w.play(answer, guesser){
+        if let Some(score) = w.play(answer_b, guesser){
             println!("Guessed {} in {}", answer, score);
         }else{
             eprintln!("failed to guess ");

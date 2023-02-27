@@ -1,9 +1,9 @@
 use std::{borrow::Cow};
 
-use crate::{Guesser, Guess, DICT, Correctness};
+use crate::{Guesser, Guess, DICT, Correctness, Word};
 
 pub struct VecRem{
-    remaining: Vec<(&'static str, usize)>,
+    remaining: Vec<(&'static Word, usize)>,
 }
 
 impl VecRem {
@@ -14,7 +14,7 @@ impl VecRem {
                     |line| {
                     let (word, count) = line.split_once(" ").expect("every line is word + space + occurance");
                     let count:usize = count.parse().expect("every count is a number");
-                    (word, count)
+                    (word.as_bytes().try_into().expect("word is not 5-character long"), count)
                     }
             ))       
         }
@@ -22,18 +22,18 @@ impl VecRem {
 }
 #[derive(Debug, Clone, Copy)]
 struct Candidate {
-    word: &'static str,
+    word: &'static Word,
     goodness: f64,
 }
 
 impl Guesser for VecRem {
-    fn guess(&mut self, history: &[Guess]) -> String{
+    fn guess(&mut self, history: &[Guess]) -> Word{
         if history.is_empty(){
-            return "tares".to_owned();
+            return *b"tares";
         }
         if let Some(last) = history.last(){
             // update self.remaining based on history
-            self.remaining.retain(|(word, _)| last.matches(word));
+            self.remaining.retain(|(word, _)| last.matches(*word));
         }
         let remaining_count: usize = self.remaining.iter().map(|(_, count)|{count}).sum();
         let mut best:Option<Candidate>= None;
@@ -69,7 +69,7 @@ impl Guesser for VecRem {
                     best = Some(Candidate{ word, goodness});
                 }
             }
-        best.unwrap().word.to_string()
+        *best.unwrap().word
     }
 }
 
